@@ -48,4 +48,25 @@ public class CadastroService {
 
         return quantidade;
     }
+
+    //Verifica o nome e a senha, retorna o login correspondente, retorna null se não encontrar nenhuma combinação válida.
+    public Login autenticar(String nome, String senha){
+
+        for (Login login : logins){
+            if (login.getNome().equalsIgnoreCase(nome) && login.getSenha().equals(senha)){
+                return login;
+            }
+        }
+        return  null;
+    }
+
+    public boolean existeUsuario(String nome){
+
+        for (Login login : logins){
+            if(login.getNome().equalsIgnoreCase(nome)){
+                return true;
+            }
+        }
+        return false;
+    }
 }
