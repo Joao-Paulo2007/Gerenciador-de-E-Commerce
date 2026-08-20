@@ -1,9 +1,9 @@
 package service;
 
 import Enum.FiltrarProdutos;
-import model.Produto;
 import Enum.StatusDoProduto;
 import Enum.StatusEntrega;
+import model.Produto;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -11,22 +11,29 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 
-//Esse service é responsável por criar o CRUD (Create, Read, Update, Delete) de um produto
-
+/**
+ * Responsável por todo o CRUD de produtos e por persistir os dados
+ * em um arquivo .txt (banco de dados simples em texto).
+ */
 public class ProdutoService {
 
     private static final String CAMINHO_ARQUIVO = "data/produtos.txt";
 
     private final List<Produto> produtos = new ArrayList<>();
+    private String imagemUrl;
 
     public ProdutoService() {
         carregar();
     }
 
-    public Produto adicionar(String nome, FiltrarProdutos categoria, double preco, int quantidade, String descricao, StatusDoProduto status, StatusEntrega statusEntrega) {
+    // ---------- CRUD ----------
+
+    public Produto adicionar(String nome, FiltrarProdutos categoria, double preco, int quantidade,
+                             String descricao, StatusDoProduto status, StatusEntrega statusEntrega, String imagemUrl) {
 
         String codigo = GeradorCodigoProduto.gerarCodigo();
-        Produto produto = new Produto(codigo, nome, categoria, preco, quantidade, descricao, status, statusEntrega);
+        Produto produto = new Produto(codigo, nome, categoria, preco, quantidade, descricao, status,
+                statusEntrega, this.imagemUrl);
         produtos.add(produto);
         salvar();
         return produto;
@@ -79,7 +86,8 @@ public class ProdutoService {
         return resultado;
     }
 
-    //Salva todos os produtos no banco de dados formato .txt
+    // ---------- Persistência em .txt ----------
+
     private void salvar() {
         try {
             Path pasta = Paths.get("data");
@@ -91,7 +99,7 @@ public class ProdutoService {
                     new OutputStreamWriter(new FileOutputStream(CAMINHO_ARQUIVO), StandardCharsets.UTF_8))) {
 
                 for (Produto produto : produtos) {
-                    escritor.write(produto.salvarArquivo());
+                    escritor.write(produto.paraLinhaArquivo());
                     escritor.newLine();
                 }
             }
@@ -100,7 +108,6 @@ public class ProdutoService {
         }
     }
 
-    //Verifica se há um banco de dados e carrega a informação
     private void carregar() {
         Path caminho = Paths.get(CAMINHO_ARQUIVO);
 
@@ -117,7 +124,7 @@ public class ProdutoService {
                     continue;
                 }
                 try {
-                    Produto produto = Produto.ReloadArquivo(linha);
+                    Produto produto = Produto.deLinhaArquivo(linha);
                     if (produto != null) {
                         produtos.add(produto);
                         GeradorCodigoProduto.ajustarProximoCodigo(produto.getCodigo());

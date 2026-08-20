@@ -14,10 +14,11 @@ public class Produto {
     private String descricao;
     private StatusDoProduto status;
     private StatusEntrega statusEntrega;
+    private String imagemUrl;
 
     public Produto(String codigo, String nome, FiltrarProdutos categoria, double preco,
                    int quantidadeEstoque, String descricao, StatusDoProduto status,
-                   StatusEntrega statusEntrega) {
+                   StatusEntrega statusEntrega, String imagemUrl) {
         this.codigo = codigo;
         this.nome = nome;
         this.categoria = categoria;
@@ -26,6 +27,7 @@ public class Produto {
         this.descricao = descricao;
         this.status = status;
         this.statusEntrega = statusEntrega;
+        this.imagemUrl = imagemUrl;
     }
 
     public String getCodigo() {
@@ -92,15 +94,34 @@ public class Produto {
         this.statusEntrega = statusEntrega;
     }
 
-    public String salvarArquivo(){
-        String descricaoSegura = descricao == null ? "" : descricao.replace("\n", " ").replace("|", "/");
-        return codigo + "|" + nome + "|" + categoria.name() + "|" + preco + "|" + quantidadeEstoque + "|" + status.name() + "|" + statusEntrega.name() + "|" + descricaoSegura;
+    public String getImagemUrl() {
+        return imagemUrl;
     }
 
-    public static Produto ReloadArquivo(String linha){
-        String[] campos = linha.split("\\|", 8);
+    public void setImagemUrl(String imagemUrl) {
+        this.imagemUrl = imagemUrl;
+    }
 
-        if (campos.length < 8){
+    /**
+     * Converte o produto em uma linha de texto para salvar no arquivo .txt
+     * Formato: codigo|nome|categoria|preco|quantidade|status|statusEntrega|imagemUrl|descricao
+     */
+    public String paraLinhaArquivo() {
+        String descricaoSegura = descricao == null ? "" : descricao.replace("\n", " ").replace("|", "/");
+        String imagemUrlSegura = imagemUrl == null ? "" : imagemUrl.replace("|", "/");
+        return codigo + "|" + nome + "|" + categoria.name() + "|" + preco + "|" + quantidadeEstoque
+                + "|" + status.name() + "|" + statusEntrega.name() + "|" + imagemUrlSegura + "|" + descricaoSegura;
+    }
+
+    /**
+     * Reconstrói um Produto a partir de uma linha salva no arquivo .txt
+     * Aceita tanto o formato novo (com imagemUrl) quanto o formato antigo (sem imagemUrl),
+     * para não quebrar arquivos de produtos já existentes.
+     */
+    public static Produto deLinhaArquivo(String linha) {
+        String[] campos = linha.split("\\|", 9);
+
+        if (campos.length < 8) {
             return null;
         }
 
@@ -111,9 +132,19 @@ public class Produto {
         int quantidade = Integer.parseInt(campos[4]);
         StatusDoProduto status = StatusDoProduto.valueOf(campos[5]);
         StatusEntrega statusEntrega = StatusEntrega.valueOf(campos[6]);
-        String descricao = campos[7];
 
-        return new Produto(codigo, nome, categoria, preco, quantidade, descricao, status, statusEntrega);
+        String imagemUrl;
+        String descricao;
+
+        if (campos.length == 9) {
+            imagemUrl = campos[7];
+            descricao = campos[8];
+        } else {
+            // Arquivo salvo antes de existir o campo de imagem
+            imagemUrl = "";
+            descricao = campos[7];
+        }
+
+        return new Produto(codigo, nome, categoria, preco, quantidade, descricao, status, statusEntrega, imagemUrl);
     }
-
 }
